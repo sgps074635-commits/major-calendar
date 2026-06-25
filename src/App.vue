@@ -17,6 +17,7 @@ import {
   Calendar as CalendarIcon, 
   Sparkles,
   FileSpreadsheet,
+  FileText,
   LogOut,
   GripVertical,
   ChevronRight,
@@ -542,6 +543,106 @@ const exportCsv = () => {
   document.body.removeChild(link)
 }
 
+const exportWord = () => {
+  const yr = academicYear.value
+  const sem = activeTab.value
+  const titleText = `${schoolName.value}${yr}學年度${sem}重大行事 課發會討論版`
+  
+  let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">`
+  html += `<head><meta charset="utf-8"><title>${titleText}</title>`
+  html += `<style>`
+  html += `
+    @page {
+      size: A4 portrait;
+      margin: 1.5cm 1.2cm 1.5cm 1.2cm;
+    }
+    body {
+      font-family: "微軟正黑體", "Microsoft JhengHei", "新細明體", sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .title {
+      text-align: center;
+      font-size: 16pt;
+      font-weight: bold;
+      margin-bottom: 20px;
+      font-family: "微軟正黑體", "Microsoft JhengHei", sans-serif;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #000000;
+      padding: 8px 10px;
+      font-size: 11pt;
+      vertical-align: top;
+      word-break: break-all;
+    }
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+      text-align: center;
+    }
+    .center {
+      text-align: center;
+      vertical-align: middle;
+    }
+    .left {
+      text-align: left;
+    }
+    .event-line {
+      margin: 0;
+      padding: 0;
+      line-height: 1.4;
+      font-size: 11pt;
+    }
+  `
+  html += `</style></head><body>`
+  html += `<div class="title">${titleText}</div>`
+  html += `<table>`
+  html += `<thead>`
+  html += `<tr>`
+  html += `<th style="width: 12%;">周次</th>`
+  html += `<th style="width: 20%;">起訖時間</th>`
+  html += `<th style="width: 48%;">重大行事</th>`
+  html += `<th style="width: 20%;">備註</th>`
+  html += `</tr>`
+  html += `</thead>`
+  html += `<tbody>`
+  
+  currentRows.value.forEach(row => {
+    const isVacation = row.id.includes('vacation')
+    const rowStyle = isVacation ? 'background-color: #fafafa;' : ''
+    
+    html += `<tr style="${rowStyle}">`
+    html += `<td class="center" style="font-weight: bold;">${row.weekName}</td>`
+    html += `<td class="center">${row.dateRange || ''}</td>`
+    
+    const filteredEvents = row.events
+      .filter(e => e.trim() !== '')
+      .map(e => `<div class="event-line">${e}</div>`)
+      .join('')
+    html += `<td class="left">${filteredEvents || ''}</td>`
+    
+    const remarkHtml = row.remark ? row.remark.replace(/\n/g, '<br>') : ''
+    html += `<td class="left">${remarkHtml}</td>`
+    html += `</tr>`
+  })
+  
+  html += `</tbody></table>`
+  html += `</body></html>`
+  
+  const blob = new Blob([html], { type: 'application/msword;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+  link.setAttribute("href", url)
+  link.setAttribute("download", `${titleText}.doc`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 const triggerPrint = () => {
   window.print()
 }
@@ -637,6 +738,11 @@ onMounted(() => {
             <Settings class="w-5 h-5" />
           </button>
 
+          <!-- Export Word -->
+          <button @click="exportWord" class="btn btn-primary" style="background-color: hsl(210, 80%, 42%);" title="匯出 Word 討論版">
+            <FileText class="w-4 h-4" /> 匯出 Word
+          </button>
+
           <!-- Print Trigger -->
           <button @click="triggerPrint" class="btn btn-success">
             <Printer class="w-4 h-4" /> 列印 / 儲存 PDF
@@ -683,6 +789,9 @@ onMounted(() => {
             </button>
             <button @click="exportCsv" class="btn btn-secondary w-full text-left py-2 text-xs">
               <FileSpreadsheet class="w-4 h-4 text-green-600" /> 匯出當前學期行事曆為 Excel (CSV)
+            </button>
+            <button @click="exportWord" class="btn btn-secondary w-full text-left py-2 text-xs">
+              <FileText class="w-4 h-4 text-blue-600" /> 匯出當前學期行事曆為 Word (.doc)
             </button>
           </div>
         </div>
