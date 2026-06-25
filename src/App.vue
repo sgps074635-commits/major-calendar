@@ -554,18 +554,20 @@ const exportWord = () => {
   html += `
     @page {
       size: A4 portrait;
-      margin: 1.5cm 1.2cm 1.5cm 1.2cm;
+      margin: 0.6cm 0.8cm 0.6cm 0.8cm;
     }
     body {
       font-family: "微軟正黑體", "Microsoft JhengHei", "新細明體", sans-serif;
       margin: 0;
       padding: 0;
+      font-size: 8.5pt;
+      line-height: 1.15;
     }
     .title {
       text-align: center;
-      font-size: 16pt;
+      font-size: 13pt;
       font-weight: bold;
-      margin-bottom: 20px;
+      margin-bottom: 6px;
       font-family: "微軟正黑體", "Microsoft JhengHei", sans-serif;
     }
     table {
@@ -574,19 +576,19 @@ const exportWord = () => {
     }
     th, td {
       border: 1px solid #000000;
-      padding: 8px 10px;
-      font-size: 11pt;
-      vertical-align: top;
+      padding: 3px 5px;
+      font-size: 8.5pt;
+      vertical-align: middle;
       word-break: break-all;
     }
     th {
       background-color: #f2f2f2;
       font-weight: bold;
       text-align: center;
+      padding: 4px 5px;
     }
     .center {
       text-align: center;
-      vertical-align: middle;
     }
     .left {
       text-align: left;
@@ -594,8 +596,8 @@ const exportWord = () => {
     .event-line {
       margin: 0;
       padding: 0;
-      line-height: 1.4;
-      font-size: 11pt;
+      line-height: 1.1;
+      font-size: 8.5pt;
     }
   `
   html += `</style></head><body>`
@@ -603,9 +605,9 @@ const exportWord = () => {
   html += `<table>`
   html += `<thead>`
   html += `<tr>`
-  html += `<th style="width: 12%;">周次</th>`
-  html += `<th style="width: 20%;">起訖時間</th>`
-  html += `<th style="width: 48%;">重大行事</th>`
+  html += `<th style="width: 10%;">周次</th>`
+  html += `<th style="width: 18%;">起訖時間</th>`
+  html += `<th style="width: 52%;">重大行事</th>`
   html += `<th style="width: 20%;">備註</th>`
   html += `</tr>`
   html += `</thead>`
