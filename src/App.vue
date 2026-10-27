@@ -23,9 +23,13 @@ import {
   ChevronRight,
   Info,
   Check,
-  RotateCcw
+  RotateCcw,
+  Cloud,
+  CloudOff,
+  Loader2
 } from '@lucide/vue'
 import defaultData from './defaultData.json'
+import { saveToCloud, subscribeToCloud } from './firebase'
 
 // --- State Variables ---
 const currentMode = ref('view') // 'view' = 檢視模式, 'edit' = 編輯模式
@@ -71,6 +75,11 @@ const isDark = ref(false)
 
 // Auto-save feedback message
 const showSaveFeedback = ref(false)
+
+// 雲端即時同步狀態 ('connected' | 'syncing' | 'offline' | 'connecting')
+const cloudSyncStatus = ref('connecting')
+const isRemoteUpdate = ref(false) // 避免雲端推送觸發本地重複保存循環
+let cloudSaveTimer = null
 
 // --- Helper: Default rows generator ---
 const resetTabStructure = (semester) => {
@@ -158,7 +167,9 @@ const resetToDefaultData = () => {
   }
 }
 
-const saveDb = () => {
+const saveDb = (syncToCloud = true) => {
+  if (isRemoteUpdate.value) return
+
   db.value.colWidths = colWidths.value
   db.value.schoolName = schoolName.value
   localStorage.setItem('calendar_system_db', JSON.stringify(db.value))
@@ -168,6 +179,20 @@ const saveDb = () => {
   setTimeout(() => {
     showSaveFeedback.value = false
   }, 1500)
+
+  // 雙向即時同步至 Firebase 雲端資料庫
+  if (syncToCloud) {
+    cloudSyncStatus.value = 'syncing'
+    clearTimeout(cloudSaveTimer)
+    cloudSaveTimer = setTimeout(async () => {
+      const res = await saveToCloud(JSON.parse(JSON.stringify(db.value)))
+      if (res.success) {
+        cloudSyncStatus.value = 'connected'
+      } else {
+        cloudSyncStatus.value = 'offline'
+      }
+    }, 400)
+  }
 }
 
 const loadYearSemester = () => {
@@ -683,8 +708,37 @@ onMounted(() => {
     isAuthorized.value = true
   }
   
-  // Load Database
+  // Load Database from local cache first for instant rendering
   loadDb()
+
+  // 啟動 Firebase 雲端即時雙向同步
+  subscribeToCloud((cloudData) => {
+    if (cloudData && cloudData.years) {
+      isRemoteUpdate.value = true
+      db.value = {
+        ...defaultData,
+        ...cloudData,
+        colWidths: { ...(defaultData.colWidths || {}), ...(cloudData.colWidths || {}) },
+        years: { ...(defaultData.years || {}), ...(cloudData.years || {}) }
+      }
+      colWidths.value = db.value.colWidths || { week: 90, date: 160, events: 550, remark: 260 }
+      schoolName.value = db.value.schoolName || '彰化縣伸港鄉新港國民小學'
+      localStorage.setItem('calendar_system_db', JSON.stringify(db.value))
+      loadYearSemester()
+      cloudSyncStatus.value = 'connected'
+      setTimeout(() => {
+        isRemoteUpdate.value = false
+      }, 200)
+    } else {
+      // 雲端首次尚無文檔時，自動將 115 預設資料寫入雲端
+      cloudSyncStatus.value = 'syncing'
+      saveToCloud(JSON.parse(JSON.stringify(db.value))).then(() => {
+        cloudSyncStatus.value = 'connected'
+      }).catch(() => {
+        cloudSyncStatus.value = 'offline'
+      })
+    }
+  })
 })
 </script>
 
@@ -705,10 +759,23 @@ onMounted(() => {
           >
           <span class="system-title">學年度重大行事曆系統</span>
           
-          <!-- Auto save status indicator -->
-          <div class="flex items-center text-xs bg-white/20 px-2 py-1 rounded text-white/90 gap-1 ml-2 font-medium" style="opacity: 0.8;">
-            <Check class="w-3 h-3 text-green-300" />
-            <span>本機智慧存檔中</span>
+          <!-- Cloud Realtime sync status indicator -->
+          <div class="flex items-center text-xs bg-white/20 px-2.5 py-1 rounded-full text-white/95 gap-1.5 ml-2 font-medium transition-all" style="backdrop-filter: blur(4px);">
+            <template v-if="cloudSyncStatus === 'connected'">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <Cloud class="w-3.5 h-3.5 text-emerald-300" />
+              <span>雲端即時同步</span>
+            </template>
+            <template v-else-if="cloudSyncStatus === 'syncing'">
+              <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+              <Loader2 class="w-3.5 h-3.5 text-amber-300 animate-spin" />
+              <span>同步中...</span>
+            </template>
+            <template v-else>
+              <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+              <CloudOff class="w-3.5 h-3.5 text-slate-300" />
+              <span>本機離線模式</span>
+            </template>
           </div>
         </div>
         
