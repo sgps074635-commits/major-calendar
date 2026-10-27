@@ -1,0 +1,445 @@
+{
+  "savedPassword": "admin123",
+  "schoolName": "彰化縣伸港鄉新港國民小學",
+  "colWidths": {
+    "week": 90,
+    "date": 160,
+    "events": 550,
+    "remark": 260
+  },
+  "years": {
+    "115": {
+      "sem1": {
+        "startDate": "2026-08-30",
+        "rows": [
+          {
+            "id": "vacation-start",
+            "weekName": "暑假",
+            "dateRange": "07/01~08/29",
+            "events": [
+              "7/09(四)和美區新生編班",
+              "7/31(五)學生返校日教師備課日",
+              "8/26(三)、8/27(四)、8/28(五)備課日",
+              "8/27(四)返校日",
+              "8/28(五)英語夏日育樂營"
+            ],
+            "remark": "教師備課日\n114學年度7/31\n115學年度8/26、27、28"
+          },
+          {
+            "id": "week-1",
+            "weekName": "第1週",
+            "dateRange": "08/30~09/05",
+            "events": [
+              "8/31(一)開學、新生家長座談會"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-2",
+            "weekName": "第2週",
+            "dateRange": "09/06~09/12",
+            "events": [
+              "9/12(六)班親會"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-3",
+            "weekName": "第3週",
+            "dateRange": "09/13~09/19",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-4",
+            "weekName": "第4週",
+            "dateRange": "09/20~09/26",
+            "events": [
+              "9/25(五)中秋節放假一天"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-5",
+            "weekName": "第5週",
+            "dateRange": "09/27~10/03",
+            "events": [
+              "9/28(一)教師節放假一天"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-6",
+            "weekName": "第6週",
+            "dateRange": "10/04~10/10",
+            "events": [
+              "10/10(六)國慶日，於10/9(五)補假一天"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-7",
+            "weekName": "第7週",
+            "dateRange": "10/11~10/17",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-8",
+            "weekName": "第8週",
+            "dateRange": "10/18~10/24",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-9",
+            "weekName": "第9週",
+            "dateRange": "10/25~10/31",
+            "events": [
+              "10 月25 日(日)臺灣光復暨金門古寧頭大捷紀念日，於10 月26 日(一)補假一日"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-10",
+            "weekName": "第10週",
+            "dateRange": "11/01~11/07",
+            "events": [
+              "11/5(四)、11/6(五)期中考",
+              "11/6(五)一年級注音符號考試"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-11",
+            "weekName": "第11週",
+            "dateRange": "11/08~11/14",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-12",
+            "weekName": "第12週",
+            "dateRange": "11/15~11/21",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-13",
+            "weekName": "第13週",
+            "dateRange": "11/22~11/28",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-14",
+            "weekName": "第14週",
+            "dateRange": "11/29~12/05",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-15",
+            "weekName": "第15週",
+            "dateRange": "12/06~12/12",
+            "events": [
+              "12/12(六)校慶"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-16",
+            "weekName": "第16週",
+            "dateRange": "12/13~12/19",
+            "events": [
+              "12/14(一)校慶補假"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-17",
+            "weekName": "第17週",
+            "dateRange": "12/20~12/26",
+            "events": [
+              "12/25(五)行憲紀念日放假一天"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-18",
+            "weekName": "第18週",
+            "dateRange": "12/27~01/02",
+            "events": [
+              "1/1(五)元旦放假一天"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-19",
+            "weekName": "第19週",
+            "dateRange": "01/03~01/09",
+            "events": [
+              "1/7(四)、1/8(五)六年級期末考"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-20",
+            "weekName": "第20週",
+            "dateRange": "01/10~01/16",
+            "events": [
+              "1/13(三)、1/14(四)一~五年級期末考",
+              "1/14~1/15期末不合格領域補教教學與補考"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-21",
+            "weekName": "第21週",
+            "dateRange": "01/17~01/23",
+            "events": [
+              "1/20(三)結業式"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "vacation-end",
+            "weekName": "寒假",
+            "dateRange": "01/21~02/10",
+            "events": [
+              "1/21(四)寒假開始"
+            ],
+            "remark": ""
+          }
+        ]
+      },
+      "sem2": {
+        "startDate": "2027-02-07",
+        "rows": [
+          {
+            "id": "vacation-start",
+            "weekName": "寒假",
+            "dateRange": "01/20~02/10",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-1",
+            "weekName": "第1週",
+            "dateRange": "02/07~02/13",
+            "events": [
+              "02/11(四)開學"
+            ],
+            "remark": "2月4日 (四) – 2月10日 (三)農曆春節"
+          },
+          {
+            "id": "week-2",
+            "weekName": "第2週",
+            "dateRange": "02/14~02/20",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-3",
+            "weekName": "第3週",
+            "dateRange": "02/21~02/27",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-4",
+            "weekName": "第4週",
+            "dateRange": "02/28~03/06",
+            "events": [
+              "2/28 和平紀念日逢週日，於 3/1（一）補假一天。"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-5",
+            "weekName": "第5週",
+            "dateRange": "03/07~03/13",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-6",
+            "weekName": "第6週",
+            "dateRange": "03/14~03/20",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-7",
+            "weekName": "第7週",
+            "dateRange": "03/21~03/27",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-8",
+            "weekName": "第8週",
+            "dateRange": "03/28~04/03",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-9",
+            "weekName": "第9週",
+            "dateRange": "04/04~04/10",
+            "events": [
+              "兒童節、清明節：4/3(六) ~ 4/6(二)"
+            ],
+            "remark": "兒童節、清明節：4/3(六) ~ 4/6(二)"
+          },
+          {
+            "id": "week-10",
+            "weekName": "第10週",
+            "dateRange": "04/11~04/17",
+            "events": [
+              "4/15(四)、4/16(五)六年級期中考"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-11",
+            "weekName": "第11週",
+            "dateRange": "04/18~04/24",
+            "events": [
+              "4/22(四)、4/23(五)期中考(一~五年級)"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-12",
+            "weekName": "第12週",
+            "dateRange": "04/25~05/01",
+            "events": [
+              "5/1 勞動節逢週六，提前於 4/30（五）補假。"
+            ],
+            "remark": "5/1 逢週六，提前於 4/30（五）補假。"
+          },
+          {
+            "id": "week-13",
+            "weekName": "第13週",
+            "dateRange": "05/02~05/08",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-14",
+            "weekName": "第14週",
+            "dateRange": "05/09~05/15",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-15",
+            "weekName": "第15週",
+            "dateRange": "05/16~05/22",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-16",
+            "weekName": "第16週",
+            "dateRange": "05/23~05/29",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-17",
+            "weekName": "第17週",
+            "dateRange": "05/30~06/05",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-18",
+            "weekName": "第18週",
+            "dateRange": "06/06~06/12",
+            "events": [
+              "6/9端午節(三)"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-19",
+            "weekName": "第19週",
+            "dateRange": "06/13~06/19",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-20",
+            "weekName": "第20週",
+            "dateRange": "06/20~06/26",
+            "events": [
+              "6/22(二)、6/23(三)1~5年級期末考"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "week-21",
+            "weekName": "第21週",
+            "dateRange": "06/27~07/03",
+            "events": [
+              "6/30(三)結業式",
+              "7/1(四)暑假開始"
+            ],
+            "remark": ""
+          },
+          {
+            "id": "vacation-end",
+            "weekName": "暑假",
+            "dateRange": "07/01~08/29",
+            "events": [
+              ""
+            ],
+            "remark": ""
+          }
+        ]
+      }
+    }
+  }
+}

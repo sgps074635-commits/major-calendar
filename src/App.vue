@@ -22,8 +22,10 @@ import {
   GripVertical,
   ChevronRight,
   Info,
-  Check
+  Check,
+  RotateCcw
 } from '@lucide/vue'
+import defaultData from './defaultData.json'
 
 // --- State Variables ---
 const currentMode = ref('view') // 'view' = 檢視模式, 'edit' = 編輯模式
@@ -45,18 +47,8 @@ const colWidths = ref({
   remark: 260
 })
 
-// Database
-const db = ref({
-  savedPassword: 'admin123',
-  schoolName: '彰化縣伸港鄉新港國民小學',
-  colWidths: {
-    week: 90,
-    date: 160,
-    events: 550,
-    remark: 260
-  },
-  years: {}
-})
+// Database initialized with defaultData
+const db = ref(JSON.parse(JSON.stringify(defaultData)))
 
 // Current visible rows and start date
 const currentRows = ref([])
@@ -117,6 +109,13 @@ const resetTabStructure = (semester) => {
   return rows
 }
 
+// 判斷該學年資料是否為全空白
+const isYearDataEmpty = (yearObj) => {
+  if (!yearObj || !yearObj.sem1 || !yearObj.sem1.rows) return true
+  const sem1HasEvents = yearObj.sem1.rows.some(r => r.events && r.events.some(e => e && e.trim() !== ''))
+  return !sem1HasEvents
+}
+
 // --- Data Synchronization ---
 const loadDb = () => {
   const raw = localStorage.getItem('calendar_system_db')
@@ -124,14 +123,22 @@ const loadDb = () => {
     try {
       const parsed = JSON.parse(raw)
       db.value = {
-        ...db.value,
+        ...defaultData,
         ...parsed,
-        colWidths: { ...db.value.colWidths, ...parsed.colWidths },
-        years: parsed.years || {}
+        colWidths: { ...(defaultData.colWidths || {}), ...(parsed.colWidths || {}) },
+        years: { ...(defaultData.years || {}), ...(parsed.years || {}) }
+      }
+      // 如果 115 學年度為空白（先前本地快取到初始空模板），自動套入完整的預設行事曆資料
+      if (isYearDataEmpty(db.value.years['115']) && defaultData.years['115']) {
+        db.value.years['115'] = JSON.parse(JSON.stringify(defaultData.years['115']))
       }
     } catch (e) {
       console.error("Failed to parse calendar_system_db", e)
+      db.value = JSON.parse(JSON.stringify(defaultData))
     }
+  } else {
+    // 首次開啟或無快取時，載入完整的預設行事曆資料
+    db.value = JSON.parse(JSON.stringify(defaultData))
   }
   
   colWidths.value = db.value.colWidths || { week: 90, date: 160, events: 550, remark: 260 }
@@ -139,6 +146,16 @@ const loadDb = () => {
   
   // Load current year and semester
   loadYearSemester()
+}
+
+// 還原/強制同步至預設 115 學年度行事曆資料
+const resetToDefaultData = () => {
+  if (confirm("確定要將資料還原為「115學年度預設重大行事曆」嗎？\n這將會覆蓋當前瀏覽器中的設定並同步為最新版本。")) {
+    db.value = JSON.parse(JSON.stringify(defaultData))
+    saveDb()
+    loadDb()
+    alert("✅ 已成功同步至 115 學年度預設重大行事曆！")
+  }
 }
 
 const saveDb = () => {
@@ -794,6 +811,9 @@ onMounted(() => {
             </button>
             <button @click="exportWord" class="btn btn-secondary w-full text-left py-2 text-xs">
               <FileText class="w-4 h-4 text-blue-600" /> 匯出當前學期行事曆為 Word (.doc)
+            </button>
+            <button @click="resetToDefaultData" class="btn btn-secondary w-full text-left py-2 text-xs border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950 text-amber-700 dark:text-amber-400">
+              <RotateCcw class="w-4 h-4 text-amber-600" /> 🔄 還原/同步至預設 115 行事曆
             </button>
           </div>
         </div>
