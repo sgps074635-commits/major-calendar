@@ -688,6 +688,71 @@ body {
   animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.modal-content.modal-content-lg {
+  max-width: 700px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-body.modal-body-scroll {
+  overflow-y: auto;
+  flex: 1;
+  max-height: calc(88vh - 130px);
+  padding: 1.25rem 1.5rem;
+}
+
+.btn-check {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+}
+
+.btn-check:hover {
+  background-color: var(--primary);
+  color: white;
+}
+
+/* Check Result Cards */
+.check-stat-card {
+  flex: 1;
+  min-width: 140px;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background-color: var(--bg-card);
+}
+
+.check-item-card {
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border-left: 4px solid var(--border-color);
+  background-color: var(--bg-panel);
+  margin-bottom: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.88rem;
+}
+
+.check-item-card.error {
+  border-left-color: var(--accent-danger);
+  background-color: var(--accent-danger-light);
+}
+
+.check-item-card.warning {
+  border-left-color: var(--accent-warning);
+  background-color: var(--accent-warning-light);
+}
+
+.check-item-card.passed {
+  border-left-color: var(--accent-success);
+  background-color: var(--accent-success-light);
+}
+
 .modal-header {
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--border-color);

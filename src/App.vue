@@ -26,7 +26,11 @@ import {
   RotateCcw,
   Cloud,
   CloudOff,
-  Loader2
+  Loader2,
+  SearchCheck,
+  CheckCircle2,
+  AlertTriangle,
+  AlertCircle
 } from '@lucide/vue'
 import defaultData from './defaultData.json'
 import { saveToCloud, subscribeToCloud } from './firebase'
@@ -687,6 +691,244 @@ const exportWord = () => {
   document.body.removeChild(link)
 }
 
+// --- Auto-Checker Feature (一鍵自動檢查週數、日期、星期及內容) ---
+const showCheckModal = ref(false)
+const isChecking = ref(false)
+const checkFilter = ref('all') // 'all', 'issues', 'passed'
+
+const checkReport = ref({
+  totalChecked: 0,
+  errors: [],
+  warnings: [],
+  passed: []
+})
+
+const daysOfWeekNames = ['日', '一', '二', '三', '四', '五', '六']
+
+const runAutoCheck = () => {
+  isChecking.value = true
+  showCheckModal.value = true
+  checkFilter.value = 'all'
+
+  const ay = parseInt(academicYear.value, 10) || 115
+  const isSem1 = activeTab.value === '上學期'
+
+  const errors = []
+  const warnings = []
+  const passed = []
+  let totalItems = 0
+
+  // 1. 檢查週次起訖時間連續性與標準格式
+  currentRows.value.forEach((row) => {
+    const isVacation = row.id.includes('vacation')
+
+    if (row.dateRange && row.dateRange.trim()) {
+      totalItems++
+      const parts = row.dateRange.split('~')
+      if (parts.length !== 2) {
+        errors.push({
+          week: row.weekName,
+          type: '起訖格式錯誤',
+          text: row.dateRange,
+          reason: '起訖時間應使用「~」分隔，例如：02/07~02/13',
+          suggestion: '請確認格式為 MM/DD~MM/DD'
+        })
+      } else {
+        const [sm, sd] = parts[0].trim().split('/').map(Number)
+        const [em, ed] = parts[1].trim().split('/').map(Number)
+
+        if (!sm || !sd || !em || !ed) {
+          errors.push({
+            week: row.weekName,
+            type: '日期數值異常',
+            text: row.dateRange,
+            reason: '起訖日期中的月份或日數無法正確解析',
+            suggestion: '請確認月份介於 1~12，日期介於 1~31'
+          })
+        } else if (!isVacation) {
+          const sYear = isSem1 ? (sm >= 7 ? ay + 1911 : ay + 1912) : (ay + 1912)
+          const eYear = isSem1 ? (em >= 7 ? ay + 1911 : ay + 1912) : (ay + 1912)
+          const sDate = new Date(sYear, sm - 1, sd)
+          const eDate = new Date(eYear, em - 1, ed)
+
+          const sDay = sDate.getDay() // 0 是週日
+          const eDay = eDate.getDay() // 6 是週六
+          const diffDays = Math.round((eDate - sDate) / (1000 * 60 * 60 * 24))
+
+          if (sDay !== 0) {
+            warnings.push({
+              week: row.weekName,
+              type: '起始日非星期日',
+              text: `${parts[0]} (星期${daysOfWeekNames[sDay]})`,
+              reason: `每週第一天標準為「星期日」，此處為「星期${daysOfWeekNames[sDay]}」`,
+              suggestion: '若為標準學期週次，請確認起始日期是否從星期日算起'
+            })
+          }
+          if (eDay !== 6) {
+            warnings.push({
+              week: row.weekName,
+              type: '結束日非星期六',
+              text: `${parts[1]} (星期${daysOfWeekNames[eDay]})`,
+              reason: `每週最後一天標準為「星期六」，此處為「星期${daysOfWeekNames[eDay]}」`,
+              suggestion: '若為標準學期週次，請確認結束日期是否算至星期六'
+            })
+          }
+          if (diffDays !== 6) {
+            warnings.push({
+              week: row.weekName,
+              type: '週次天數非7天',
+              text: row.dateRange,
+              reason: `此週起訖共 ${diffDays + 1} 天（標準為完整 7 天）`,
+              suggestion: '請確認該週起訖日計算是否正確'
+            })
+          }
+
+          if (sDay === 0 && eDay === 6 && diffDays === 6) {
+            passed.push({
+              week: row.weekName,
+              text: row.dateRange,
+              desc: `週次起訖標準完整 (週日~週六，共 7 天)`
+            })
+          }
+        }
+      }
+    }
+
+    // 2. 檢核重大行事與備註內容
+    const textPool = [
+      ...row.events.map(e => ({ text: e, source: '重大行事' })),
+      ...(row.remark ? [{ text: row.remark, source: '備註' }] : [])
+    ]
+
+    textPool.forEach(({ text }) => {
+      if (!text || !text.trim()) return
+
+      // 錯別字防呆
+      if (text.includes('補教教學')) {
+        warnings.push({
+          week: row.weekName,
+          type: '疑似錯別字',
+          text: text,
+          reason: '偵測到「補教教學」，學校公文標準用語通常為「補救教學」',
+          suggestion: '建議將「補教教學」修正為「補救教學」'
+        })
+      }
+
+      // 未標示星期的日期區間檢查 (例如 06/24-06/25)
+      const noWeekdayRegex = /(\d{1,2}\/\d{1,2})\s*[-~至到]\s*(\d{1,2}\/\d{1,2})/g
+      let nwMatch
+      while ((nwMatch = noWeekdayRegex.exec(text)) !== null) {
+        const afterIndex = nwMatch.index + nwMatch[0].length
+        const afterStr = text.substring(afterIndex, afterIndex + 10)
+        if (!/[（(][日一二三四五六]/.test(afterStr)) {
+          warnings.push({
+            week: row.weekName,
+            type: '格式建議',
+            text: nwMatch[0],
+            reason: `日期範圍「${nwMatch[0]}」未標示星期`,
+            suggestion: '建議在日期後加上括號星期（如 06/24(四)~06/25(五)）以方便同仁檢視'
+          })
+        }
+      }
+
+      // 檢查明確指定星期的項目
+      const regex1 = /(\d{1,2})[月/.](\d{1,2})(?:日)?(?:[^\d(（\n]{0,8})[（(](?:星期|週)?([日一二三四五六])[）)]/g
+      const regex2 = /(\d{1,2})[月/.](\d{1,2})(?:日)?(?:[^\d\n(（]{0,12})(?:逢|適逢|星期|週)([日一二三四五六])/g
+
+      const seenInText = new Set()
+      const matches = []
+
+      let m
+      while ((m = regex1.exec(text)) !== null) {
+        const k = `${m[1]}/${m[2]}-${m[3]}`
+        if (!seenInText.has(k)) {
+          seenInText.add(k)
+          matches.push({ raw: m[0], month: parseInt(m[1], 10), day: parseInt(m[2], 10), weekday: m[3] })
+        }
+      }
+      while ((m = regex2.exec(text)) !== null) {
+        const k = `${m[1]}/${m[2]}-${m[3]}`
+        if (!seenInText.has(k)) {
+          seenInText.add(k)
+          matches.push({ raw: m[0], month: parseInt(m[1], 10), day: parseInt(m[2], 10), weekday: m[3] })
+        }
+      }
+
+      matches.forEach(item => {
+        totalItems++
+        const eventYear = isSem1 ? (item.month >= 7 ? ay + 1911 : ay + 1912) : (ay + 1912)
+        const dObj = new Date(eventYear, item.month - 1, item.day)
+        const realWeekday = daysOfWeekNames[dObj.getDay()]
+
+        if (realWeekday !== item.weekday) {
+          errors.push({
+            week: row.weekName,
+            type: '日期星期不符',
+            text: item.raw,
+            reason: `文字標示為「星期${item.weekday}」，但 ${eventYear} 年 ${item.month} 月 ${item.day} 日實際為「星期${realWeekday}」`,
+            suggestion: `請將星期修正為「星期${realWeekday}」`
+          })
+        } else {
+          passed.push({
+            week: row.weekName,
+            text: item.raw,
+            desc: `日期與星期正確吻合 (${eventYear}/${item.month}/${item.day} 為 星期${realWeekday})`
+          })
+        }
+
+        // 跨週範圍檢核
+        if (row.dateRange && row.dateRange.includes('~')) {
+          const [sPart, ePart] = row.dateRange.split('~')
+          const [sm, sd] = sPart.trim().split('/').map(Number)
+          const [em, ed] = ePart.trim().split('/').map(Number)
+          if (sm && sd && em && ed) {
+            const sy = isSem1 ? (sm >= 7 ? ay + 1911 : ay + 1912) : (ay + 1912)
+            const ey = isSem1 ? (em >= 7 ? ay + 1911 : ay + 1912) : (ay + 1912)
+            const sTime = new Date(sy, sm - 1, sd, 0, 0, 0).getTime()
+            const eTime = new Date(ey, em - 1, ed, 23, 59, 59).getTime()
+            const tTime = dObj.getTime()
+
+            if (tTime < sTime || tTime > eTime) {
+              const diffToStart = Math.round((sTime - tTime) / (1000 * 60 * 60 * 24))
+              if (diffToStart <= 2 && diffToStart > 0) {
+                warnings.push({
+                  week: row.weekName,
+                  type: '跨週連假提示',
+                  text: item.raw,
+                  reason: `日期落在上一週之週末 (相距 ${diffToStart} 天)，屬於跨週連假合併標註`,
+                  suggestion: '正常連假合併標記，無需特別調整'
+                })
+              } else if (isVacation) {
+                passed.push({
+                  week: row.weekName,
+                  text: item.raw,
+                  desc: `跨學期期初/備課日備註 (${item.month}/${item.day})`
+                })
+              } else {
+                warnings.push({
+                  week: row.weekName,
+                  type: '事件日期跨週',
+                  text: item.raw,
+                  reason: `日期 (${item.month}/${item.day}) 不在該週起訖範圍 (${row.dateRange}) 內`,
+                  suggestion: '請確認事件是否填寫在正確的週次'
+                })
+              }
+            }
+          }
+        }
+      })
+    })
+  })
+
+  checkReport.value = {
+    totalChecked: totalItems,
+    errors,
+    warnings,
+    passed
+  }
+  isChecking.value = false
+}
+
 const triggerPrint = () => {
   window.print()
 }
@@ -822,6 +1064,11 @@ onMounted(() => {
             title="系統與資料庫設定"
           >
             <Settings class="w-5 h-5" />
+          </button>
+
+          <!-- One-Click Auto Check Button -->
+          <button @click="runAutoCheck" class="btn btn-check" title="一鍵自動檢查週數、日期、星期及內容防呆">
+            <SearchCheck class="w-4 h-4" /> 一鍵檢查
           </button>
 
           <!-- Export Word -->
@@ -1127,6 +1374,167 @@ onMounted(() => {
         <footer class="modal-footer">
           <button @click="showPasswordModal = false" class="btn btn-secondary py-2">取消</button>
           <button @click="verifyPassword" class="btn btn-primary py-2">解鎖並進入編輯</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Auto-Checker Result Modal -->
+    <div v-if="showCheckModal" class="modal-overlay no-print" @click.self="showCheckModal = false">
+      <div class="modal-content modal-content-lg">
+        <header class="modal-header">
+          <h3 class="modal-title flex items-center gap-2">
+            <SearchCheck class="w-5 h-5 text-purple-600" />
+            行事曆智慧檢核報告 ({{ academicYear }}學年度 {{ activeTab }})
+          </h3>
+          <button @click="showCheckModal = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+        </header>
+
+        <div class="modal-body modal-body-scroll">
+          <!-- Summary Cards -->
+          <div class="flex flex-wrap gap-3 mb-4">
+            <div class="check-stat-card border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20">
+              <span class="text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1">
+                <AlertCircle class="w-3.5 h-3.5" /> 嚴重錯誤
+              </span>
+              <span class="text-xl font-bold text-red-700 dark:text-red-300">{{ checkReport.errors.length }} 項</span>
+            </div>
+
+            <div class="check-stat-card border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20">
+              <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <AlertTriangle class="w-3.5 h-3.5" /> 建議提醒
+              </span>
+              <span class="text-xl font-bold text-amber-700 dark:text-amber-300">{{ checkReport.warnings.length }} 項</span>
+            </div>
+
+            <div class="check-stat-card border-emerald-200 dark:border-emerald-900 bg-emerald-50/50 dark:bg-emerald-950/20">
+              <span class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <CheckCircle2 class="w-3.5 h-3.5" /> 檢驗通過
+              </span>
+              <span class="text-xl font-bold text-emerald-700 dark:text-emerald-300">{{ checkReport.passed.length }} 項</span>
+            </div>
+          </div>
+
+          <!-- All Clear Banner -->
+          <div v-if="checkReport.errors.length === 0 && checkReport.warnings.length === 0" class="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-start gap-3 my-2">
+            <CheckCircle2 class="w-6 h-6 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 class="font-bold text-emerald-800 dark:text-emerald-200">太棒了！所有檢驗項目全部通過</h4>
+              <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-1">
+                本學期所有 21 週的連續日期範圍、各項行事之「日期與星期對照」完全精確吻合，無任何衝突或錯別字！
+              </p>
+            </div>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="flex items-center gap-2 mb-3 pb-2 border-b border-color">
+            <span class="text-xs font-semibold text-secondary">篩選顯示：</span>
+            <button 
+              @click="checkFilter = 'all'" 
+              :class="{'bg-purple-600 text-white shadow-sm': checkFilter === 'all', 'bg-slate-100 dark:bg-slate-800 text-secondary': checkFilter !== 'all'}"
+              class="px-2.5 py-1 rounded-full text-xs font-medium transition cursor-pointer"
+            >
+              全部 ({{ checkReport.errors.length + checkReport.warnings.length + checkReport.passed.length }})
+            </button>
+            <button 
+              @click="checkFilter = 'issues'" 
+              :class="{'bg-red-600 text-white shadow-sm': checkFilter === 'issues', 'bg-slate-100 dark:bg-slate-800 text-secondary': checkFilter !== 'issues'}"
+              class="px-2.5 py-1 rounded-full text-xs font-medium transition cursor-pointer"
+            >
+              需注意 ({{ checkReport.errors.length + checkReport.warnings.length }})
+            </button>
+            <button 
+              @click="checkFilter = 'passed'" 
+              :class="{'bg-emerald-600 text-white shadow-sm': checkFilter === 'passed', 'bg-slate-100 dark:bg-slate-800 text-secondary': checkFilter !== 'passed'}"
+              class="px-2.5 py-1 rounded-full text-xs font-medium transition cursor-pointer"
+            >
+              通過項目 ({{ checkReport.passed.length }})
+            </button>
+          </div>
+
+          <!-- Items List -->
+          <div class="space-y-2">
+            <!-- Errors -->
+            <template v-if="checkFilter === 'all' || checkFilter === 'issues'">
+              <div 
+                v-for="(err, i) in checkReport.errors" 
+                :key="'err-' + i" 
+                class="check-item-card error"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-red-700 dark:text-red-300 flex items-center gap-1.5">
+                    <AlertCircle class="w-4 h-4 text-red-600" />
+                    【{{ err.week }}】{{ err.type }}
+                  </span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-red-200/60 dark:bg-red-900/60 text-red-800 dark:text-red-200 font-semibold">嚴重錯誤</span>
+                </div>
+                <div class="text-xs text-primary font-mono bg-white/60 dark:bg-black/20 p-1.5 rounded">
+                  內容：{{ err.text }}
+                </div>
+                <div class="text-xs text-red-700 dark:text-red-300 font-medium">
+                  原因：{{ err.reason }}
+                </div>
+                <div class="text-xs text-secondary">
+                  💡 建議修正：{{ err.suggestion }}
+                </div>
+              </div>
+            </template>
+
+            <!-- Warnings -->
+            <template v-if="checkFilter === 'all' || checkFilter === 'issues'">
+              <div 
+                v-for="(warn, i) in checkReport.warnings" 
+                :key="'warn-' + i" 
+                class="check-item-card warning"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                    <AlertTriangle class="w-4 h-4 text-amber-600" />
+                    【{{ warn.week }}】{{ warn.type }}
+                  </span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-amber-200/60 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200 font-semibold">建議確認</span>
+                </div>
+                <div class="text-xs text-primary font-mono bg-white/60 dark:bg-black/20 p-1.5 rounded">
+                  內容：{{ warn.text }}
+                </div>
+                <div class="text-xs text-amber-700 dark:text-amber-300 font-medium">
+                  說明：{{ warn.reason }}
+                </div>
+                <div v-if="warn.suggestion" class="text-xs text-secondary">
+                  💡 建議：{{ warn.suggestion }}
+                </div>
+              </div>
+            </template>
+
+            <!-- Passed Items -->
+            <template v-if="checkFilter === 'all' || checkFilter === 'passed'">
+              <div 
+                v-for="(pass, i) in checkReport.passed" 
+                :key="'pass-' + i" 
+                class="check-item-card passed opacity-80 hover:opacity-100 transition"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="font-semibold text-emerald-800 dark:text-emerald-200 flex items-center gap-1.5">
+                    <CheckCircle2 class="w-3.5 h-3.5 text-emerald-600" />
+                    【{{ pass.week }}】{{ pass.text }}
+                  </span>
+                  <span class="text-[11px] text-emerald-700 dark:text-emerald-300">正確吻合</span>
+                </div>
+                <div class="text-xs text-secondary">
+                  {{ pass.desc }}
+                </div>
+              </div>
+            </template>
+
+            <!-- Empty State for filter -->
+            <div v-if="checkFilter === 'issues' && checkReport.errors.length === 0 && checkReport.warnings.length === 0" class="text-center py-8 text-secondary text-sm">
+              ✨ 無任何待確認的問題！
+            </div>
+          </div>
+        </div>
+
+        <footer class="modal-footer">
+          <button @click="runAutoCheck" class="btn btn-secondary py-2">🔄 重新檢核</button>
+          <button @click="showCheckModal = false" class="btn btn-primary py-2">完成檢閱</button>
         </footer>
       </div>
     </div>
